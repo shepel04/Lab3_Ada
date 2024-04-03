@@ -8,7 +8,8 @@ procedure Main is
    package String_Lists is new Indefinite_Doubly_Linked_Lists (String);
    use String_Lists;
 
-   procedure Starter (Storage_Size : in Integer; Item_Numbers : in Integer) is
+   procedure Starter (Storage_Size : in Integer; Item_Numbers : in Integer;
+                      Producer_Count : in Integer; Consumer_Count : in Integer) is
       Storage : List;
       Access_Storage : Counting_Semaphore (1, Default_Ceiling);
       Full_Storage   : Counting_Semaphore (Storage_Size, Default_Ceiling);
@@ -23,11 +24,11 @@ procedure Main is
       end;
 
       task body Producer is
-           Item_Numbers : Integer;
+         Item_Numbers : Integer;
       begin
-           accept Start (Item_Numbers : in Integer) do
-              Producer.Item_Numbers := Item_Numbers;
-           end Start;
+         accept Start (Item_Numbers : in Integer) do
+            Producer.Item_Numbers := Item_Numbers;
+         end Start;
 
          for i in 1 .. Item_Numbers loop
             Full_Storage.Seize;
@@ -46,9 +47,9 @@ procedure Main is
       task body Consumer is
          Item_Numbers : Integer;
       begin
-           accept Start (Item_Numbers : in Integer) do
-              Consumer.Item_Numbers := Item_Numbers;
-           end Start;
+         accept Start (Item_Numbers : in Integer) do
+            Consumer.Item_Numbers := Item_Numbers;
+         end Start;
 
          for i in 1 .. Item_Numbers loop
             Empty_Storage.Seize;
@@ -69,16 +70,21 @@ procedure Main is
          end loop;
 
       end Consumer;
-      C : array (1..3) of Consumer;
-      P :array (1..3) of Producer;
-      Col:array(1..3) of Integer:=(2,3,5);
+
+      C : array (1..Consumer_Count) of Consumer;
+      P : array (1..Producer_Count) of Producer;
+      Col : array (1..Consumer_Count) of Integer := (others => Item_Numbers);
+      Pro : array (1..Producer_Count) of Integer := (others => Item_Numbers);
    begin
       for i in  C'Range loop
          C(i).Start(Col(i));
-         P(i).Start(Col(i));
+      end loop;
+
+      for i in  P'Range loop
+         P(i).Start(Pro(i));
       end loop;
    end Starter;
 
 begin
-   Starter (5, 10);
+   Starter (5, 10, 5, 3); --size, items, producer, consumer
 end Main;
